@@ -34,6 +34,50 @@ def avoid_my_neck(my_head: Dict[str, int], my_body: List[dict], possible_moves: 
     return possible_moves
 
 
+def avoid_walls(my_head: dict, room: dict, possible_moves: List[str]) -> List[str]:
+  """
+  Avoid colliding with the walls
+  TODO: Comment this method
+  """
+
+  if my_head["x"] + 1 >= room["width"] and "right" in possible_moves:
+      possible_moves.remove("right")
+  
+  if my_head["x"] - 1 < 0 and "left" in possible_moves:
+      possible_moves.remove("left")
+
+  if my_head["y"] + 1 >= room["height"] and "up" in possible_moves:
+      possible_moves.remove("up")
+
+  if my_head["y"] - 1 < 0 and "down" in possible_moves:
+      possible_moves.remove("down")
+
+  return possible_moves
+
+
+def avoid_snake(body: dict, directions: dict, possible_moves: List[str]) -> List[str]:
+  """
+  Avoid colliding with a snake
+  TODO: Comment this method
+  """
+
+  for part in body:
+    ## Right
+    if match(directions["right"], part) and "right" in possible_moves:
+      possible_moves.remove("right")
+    ## Left
+    if match(directions["left"], part) and "left" in possible_moves:
+      possible_moves.remove("left")
+    ## Up
+    if match(directions["up"], part) and "up" in possible_moves:
+      possible_moves.remove("up")
+    ## Down
+    if match(directions["down"], part) and "down" in possible_moves:
+      possible_moves.remove("down")
+
+  return possible_moves
+
+
 def choose_move(data: dict) -> str:
     """
     data: Dictionary of all Game Board data as received from the Battlesnake Engine.
@@ -60,13 +104,35 @@ def choose_move(data: dict) -> str:
     # Don't allow your Battlesnake to move back in on it's own neck
     possible_moves = avoid_my_neck(my_head, my_body, possible_moves)
 
-    # TODO: Using information from 'data', find the edges of the board and don't let your Battlesnake move beyond them
-    # board_height = ?
-    # board_width = ?
+    # Directions
+    directions = {
+      "right": {
+        "x": my_head["x"] + 1,
+        "y": my_head["y"],
+      },
+      "left": {
+        "x": my_head["x"] - 1,
+        "y": my_head["y"],
+      },
+      "up": {
+        "x": my_head["x"],
+        "y": my_head["y"] + 1,
+      },
+      "down": {
+        "x": my_head["x"],
+        "y": my_head["y"] - 1,
+      },
+    }
 
-    # TODO Using information from 'data', don't let your Battlesnake pick a move that would hit its own body
+    # Avoid walls
+    possible_moves = avoid_walls(my_head, data["board"], possible_moves)
 
-    # TODO: Using information from 'data', don't let your Battlesnake pick a move that would collide with another Battlesnake
+    # Avoid itself
+    possible_moves = avoid_snake(my_body, directions, possible_moves)
+
+    # Avoid other snakes
+    for snake in data["board"]["snakes"]:
+      possible_moves = avoid_snake(snake["body"], directions, possible_moves)
 
     # TODO: Using information from 'data', make your Battlesnake move towards a piece of food on the board
 
@@ -77,3 +143,10 @@ def choose_move(data: dict) -> str:
     print(f"{data['game']['id']} MOVE {data['turn']}: {move} picked from all valid options in {possible_moves}")
 
     return move
+
+def match(point_1: dict, point_2: dict) -> bool:
+  """
+  Returns true if both points have the same x and y values.
+  TODO: Comment method
+  """
+  return point_1["x"] == point_2["x"] and point_1["y"] == point_2["y"]
